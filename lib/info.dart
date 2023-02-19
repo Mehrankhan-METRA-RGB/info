@@ -1,16 +1,25 @@
 import 'info_platform_interface.dart';
 
 class Info {
-  Future<String?> system() {
-    return InfoPlatform.instance.System();
+  Future<Object?> system() async {
+    return await InfoPlatform.instance.System();
   }
 
-  Future<String?> device() {
-    return InfoPlatform.instance.Device();
+  Future<Object?> device() async {
+    // Map<String, dynamic>? data = await InfoPlatform.instance.Device();
+    return await InfoPlatform.instance.Device();
   }
 
-  Future<String?> battery() {
+  Stream battery() {
     return InfoPlatform.instance.Battery();
+  }
+
+  Stream onChangeConnectivity() {
+    return InfoPlatform.instance.OnChangeConnectivity();
+  }
+
+  Future<Object?> connectivity() {
+    return InfoPlatform.instance.Connectivity();
   }
 
   Future<String?> soc() {

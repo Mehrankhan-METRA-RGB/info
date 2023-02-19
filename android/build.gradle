@@ -11,6 +11,9 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:7.2.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+//        classpath 'Gradle:androidx.localbroadcastmanager:localbroadcastmanager:1.1.0@aar'
+//        implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
+
     }
 }
 
@@ -41,6 +44,6 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion 21
     }
 }

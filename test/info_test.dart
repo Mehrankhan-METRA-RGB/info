@@ -7,6 +7,42 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 class MockInfoPlatform with MockPlatformInterfaceMixin implements InfoPlatform {
   @override
   Future<String?> system() => Future.value('42');
+
+  @override
+  Stream Battery() {
+    // TODO: implement Battery
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Object?> Device() {
+    // TODO: implement Device
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<String?> SOC() {
+    // TODO: implement SOC
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<String?> Sensors() {
+    // TODO: implement Sensors
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<String?> System() {
+    // TODO: implement System
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<String?> Thermal() {
+    // TODO: implement Thermal
+    throw UnimplementedError();
+  }
 }
 
 void main() {

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:info/info.dart';
@@ -14,9 +16,9 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _system = 'Unknown';
-  String _device = 'Unknown';
-  String _battery = 'Unknown';
+  Object _system = {'Unknown': "unknown"};
+  Object _device = {'Unknown': "unknown"};
+  Stream<String>? _battery;
   String _thermal = 'Unknown';
   String _soc = 'Unknown';
   String _sensors = 'Unknown';
@@ -30,21 +32,22 @@ class _MyAppState extends State<MyApp> {
 
   // Platform messages are asynchronous, so we initialize in an async method.
   void _init() async {
-    String? system;
-    String? device;
-    String? battery;
+    Object? system;
+    Object? device;
+    // Stream<String>? battery;
     String? thermal;
     String? soc;
     String? sensors;
     // Platform messages may fail, so we use a try/catch PlatformException.
     // We also handle the message potentially returning null.
     try {
-      system = await _infoPlugin.system() ?? 'Unknown SYSTEM DATA';
-      device = await _infoPlugin.device() ?? 'Unknown DEVICE DATA';
-      battery = await _infoPlugin.battery() ?? 'Unknown BATTERY DATA';
+      system = await _infoPlugin.system() ?? {'Unknown': "unknown"};
+      device = await _infoPlugin.device() ?? {'Unknown': "unknown"};
+      // battery = await _infoPlugin.battery() ?? 'Unknown BATTERY DATA';
       thermal = await _infoPlugin.thermal() ?? 'Unknown THERMAL DATA';
       soc = await _infoPlugin.soc() ?? 'Unknown SOC DATA';
       sensors = await _infoPlugin.sensors() ?? 'Unknown SENSORS DATA';
+      await _infoPlugin.connectivity();
     } on PlatformException {
       system = 'Failed to get platform version.';
     }
@@ -55,7 +58,7 @@ class _MyAppState extends State<MyApp> {
     if (!mounted) return;
 
     setState(() {
-      _battery = battery!;
+      // _battery = battery!;
       _system = system!;
       _device = device!;
       _thermal = thermal!;
@@ -71,15 +74,39 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('Plugin example app'),
         ),
-        body: ListView(
-          children: [
-            _tile(title: "SYSTEM INFO", data: _system),
-            _tile(title: "DEVICE INFO", data: _device),
-            _tile(title: "BATTERY INFO", data: _battery),
-            _tile(title: "THERMAL INFO", data: _thermal),
-            _tile(title: "SENSORS INFO", data: _sensors),
-            _tile(title: "SOC INFO", data: _soc),
-          ],
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              _tile(title: "SYSTEM INFO", data: jsonEncode(_system)),
+              _tile(title: "DEVICE INFO", data: jsonEncode(_device)),
+              _tile(title: "THERMAL INFO", data: _thermal),
+              _tile(title: "SENSORS INFO", data: _sensors),
+              _tile(title: "SOC INFO", data: _soc),
+              StreamBuilder(
+                  stream: _infoPlugin.battery(),
+                  builder: (context, AsyncSnapshot snapshot) {
+                    if (snapshot.hasData) {
+                      return _tile(
+                          title: "BATTERY INFO",
+                          data: snapshot.data.toString());
+                    } else {
+                      return _tile(title: "BATTERY INFO", data: 'Loading...');
+                    }
+                  }),
+              StreamBuilder(
+                  stream: _infoPlugin.onChangeConnectivity(),
+                  builder: (context, AsyncSnapshot snapshot) {
+                    if (snapshot.hasData) {
+                      return _tile(
+                          title: "CONNECTIVITY INFO",
+                          data: snapshot.data.toString());
+                    } else {
+                      return _tile(
+                          title: "CONNECTIVITY INFO", data: 'Loading...');
+                    }
+                  }),
+            ],
+          ),
         ),
       ),
     );
@@ -90,25 +117,28 @@ class _MyAppState extends State<MyApp> {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Card(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.titleLarge,
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                data,
-                style: Theme.of(context).textTheme.bodyMedium,
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  data,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

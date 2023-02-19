@@ -10,22 +10,44 @@ class MethodChannelInfo extends InfoPlatform {
   /// The method channel used to interact with the native platform.
   @visibleForTesting
   final methodChannel = const MethodChannel('info-mehran');
-
+  @visibleForTesting
+  EventChannel eventChannel = const EventChannel('info-event-mehran');
+  @visibleForTesting
+  EventChannel connectivityEventChannel =
+      const EventChannel('info-event-mehran-connectivity');
   @override
-  Future<String?> System() async {
-    final version = await methodChannel.invokeMethod<String>('SYSTEM');
+  Future<Object?> Device() async {
+    final version = await methodChannel.invokeMethod<Object>('DEVICE');
     return version;
   }
 
   @override
-  Future<String?> Battery() async {
-    final version = await methodChannel.invokeMethod<String>('BATTERY');
-    return version;
+  Stream Battery() async* {
+    /// Fires whenever the battery state changes.
+
+    yield* eventChannel.receiveBroadcastStream();
   }
 
   @override
-  Future<String?> Device() async {
-    final version = await methodChannel.invokeMethod<String>('DEVICE');
+  Stream OnChangeConnectivity() async* {
+    /// Fires whenever the Connection state changes.
+    yield* connectivityEventChannel.receiveBroadcastStream();
+  }
+
+  // Stream<Object> get onConnectivityChanged {
+  //
+  //   yield* connectivityEventChannel
+  //       .receiveBroadcastStream();
+  // }
+
+  @override
+  Future<Object?> Connectivity() async {
+    return await methodChannel.invokeMethod<Object>('CONNECTIVITY');
+  }
+
+  @override
+  Future<Object?> System() async {
+    final version = await methodChannel.invokeMethod<Object>('SYSTEM');
     return version;
   }
 

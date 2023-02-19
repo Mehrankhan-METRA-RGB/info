@@ -25,15 +25,24 @@ abstract class InfoPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<String?> System() {
+  Future<Object?> System() {
     throw UnimplementedError('System() has not been implemented.');
   }
 
-  Future<String?> Battery() {
+  Stream OnChangeConnectivity() {
+    throw UnimplementedError(
+        'onChangeConnectivity() has not been implemented.');
+  }
+
+  Future<Object?> Connectivity() {
+    throw UnimplementedError('Connectivty() has not been implemented.');
+  }
+
+  Stream Battery() {
     throw UnimplementedError('Battery() has not been implemented.');
   }
 
-  Future<String?> Device() {
+  Future<Object?> Device() {
     throw UnimplementedError('Device() has not been implemented.');
   }
 
