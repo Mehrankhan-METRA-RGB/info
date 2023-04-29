@@ -1,20 +1,33 @@
 package com.mehran.plugin.flutter.info.device
 
+import android.app.ActivityManager
+import android.content.Context
 import android.content.pm.FeatureInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.DisplayMetrics
 import android.view.Display
 import android.view.WindowManager
+import io.flutter.embedding.engine.plugins.FlutterPlugin
+import androidx.annotation.NonNull
 
-class Device(  val packageManager: PackageManager,
-                  val windowManager: WindowManager) {
+class Device(
+
+) {
+
+    lateinit var packageManager: PackageManager
+    lateinit var windowManager: WindowManager
+    lateinit var context: Context
+    lateinit var activityManager: ActivityManager
+    var memoryInfo: ActivityManager.MemoryInfo = ActivityManager.MemoryInfo()
+
 
     val mapData: MutableMap<String, Any> = HashMap()
-    val display: Display = windowManager.defaultDisplay
+  lateinit var  display: Display
     val metrics = DisplayMetrics()
 
     public fun info(): MutableMap<String, Any> {
+
         mapData["id"] = Build.ID
         mapData["manufacturer"] = Build.MANUFACTURER
         mapData["model"] = Build.MODEL
@@ -43,13 +56,17 @@ class Device(  val packageManager: PackageManager,
         mapData["type"] = Build.TYPE
         mapData["isPhysicalDevice"] = !isEmulator
         mapData["systemFeatures"] = getSystemFeatures()
-
+        mapData["totalMemory"] = memoryInfo.totalMem
+        mapData["availMemory"] = memoryInfo.availMem
+        mapData["lowMemory"] = memoryInfo.lowMemory
+        mapData["threshold"] = memoryInfo.threshold
         val version: MutableMap<String, Any> = HashMap()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             version["baseOS"] = Build.VERSION.BASE_OS
             version["previewSdkInt"] = Build.VERSION.PREVIEW_SDK_INT
             version["securityPatch"] = Build.VERSION.SECURITY_PATCH
         }
+
         version["codename"] = Build.VERSION.CODENAME
         version["incremental"] = Build.VERSION.INCREMENTAL
         version["release"] = Build.VERSION.RELEASE
@@ -89,36 +106,49 @@ class Device(  val packageManager: PackageManager,
         return mapData
 
     }
-private fun getSystemFeatures(): List<String> {
-    val featureInfos: Array<FeatureInfo> = packageManager.systemAvailableFeatures
-    return featureInfos
-        .filterNot { featureInfo -> featureInfo.name == null }
-        .map { featureInfo -> featureInfo.name }
-}
+
+    private fun getSystemFeatures(): List<String> {
+        val featureInfos: Array<FeatureInfo> = packageManager.systemAvailableFeatures
+        return featureInfos
+            .filterNot { featureInfo -> featureInfo.name == null }
+            .map { featureInfo -> featureInfo.name }
+    }
 
 
-/**
-  A simple emulator-detection based on the flutter tools detection logic and a couple of legacy
-  detection systems
- */
-private val isEmulator: Boolean
-    get() = (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic")
-            || Build.FINGERPRINT.startsWith("generic")
-            || Build.FINGERPRINT.startsWith("unknown")
-            || Build.HARDWARE.contains("goldfish")
-            || Build.HARDWARE.contains("ranchu")
-            || Build.MODEL.contains("google_sdk")
-            || Build.MODEL.contains("Emulator")
-            || Build.MODEL.contains("Android SDK built for x86")
-            || Build.MANUFACTURER.contains("Genymotion")
-            || Build.PRODUCT.contains("sdk_google")
-            || Build.PRODUCT.contains("google_sdk")
-            || Build.PRODUCT.contains("sdk")
-            || Build.PRODUCT.contains("sdk_x86")
-            || Build.PRODUCT.contains("vbox86p")
-            || Build.PRODUCT.contains("emulator")
-            || Build.PRODUCT.contains("simulator"))
+    /**
+    A simple emulator-detection based on the flutter tools detection logic and a couple of legacy
+    detection systems
+     */
+    private val isEmulator: Boolean
+        get() = (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic")
+                || Build.FINGERPRINT.startsWith("generic")
+                || Build.FINGERPRINT.startsWith("unknown")
+                || Build.HARDWARE.contains("goldfish")
+                || Build.HARDWARE.contains("ranchu")
+                || Build.MODEL.contains("google_sdk")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86")
+                || Build.MANUFACTURER.contains("Genymotion")
+                || Build.PRODUCT.contains("sdk_google")
+                || Build.PRODUCT.contains("google_sdk")
+                || Build.PRODUCT.contains("sdk")
+                || Build.PRODUCT.contains("sdk_x86")
+                || Build.PRODUCT.contains("vbox86p")
+                || Build.PRODUCT.contains("emulator")
+                || Build.PRODUCT.contains("simulator"))
 
 
+    public fun onAttachedEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+        context = flutterPluginBinding.getApplicationContext()
+        activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager;
+        activityManager.getMemoryInfo(memoryInfo);
+        packageManager  = context.packageManager
+        windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        display = windowManager.defaultDisplay
+    }
 
+    public fun onDettachEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+
+
+    }
 }

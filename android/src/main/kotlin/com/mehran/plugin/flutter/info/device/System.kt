@@ -1,14 +1,19 @@
 package com.mehran.plugin.flutter.info.device
 
+import android.app.ActivityManager
+import android.content.Context
+import io.flutter.embedding.engine.plugins.FlutterPlugin
+import androidx.annotation.NonNull
 //import java.io.BufferedReader
 //import java.io.InputStream
 //import java.io.InputStreamReader
 
 
 class System() {
-//    private var checkedPermission = PackageManager.PERMISSION_DENIED
-private val mapData: MutableMap<String, Any> = HashMap()
 
+    private val mapData: MutableMap<String, Any> = HashMap()
+//    lateinit  var activityManager: ActivityManager
+    lateinit var context:Context
     public fun info():MutableMap<String, Any>{
 
 mapData["api"]=android.os.Build.VERSION.SDK_INT
@@ -24,12 +29,25 @@ mapData["up_time"]=android.os.Build.TIME
 
         mapData["java_vm"]="UNKNOWN"
         mapData["root_access"]="UNKNOWN"
-        mapData["open_gl_es"]="UNKNOWN"
+        mapData["open_gl_es"]="activityManager.deviceConfigurationInfo.glEsVersion"
         mapData["kernal_architecture"]="UNKNOWN"
         mapData["kernal_version"]="UNKNOWN"
         mapData["google_play_services"]="UNKNOWN"
 
         return mapData
+    }
+
+    public fun onAttachedEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+        context = flutterPluginBinding.getApplicationContext()
+//        activityManager  = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager;
+
+
+    }
+
+    public fun onDettachEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+
+
+
     }
 
 }

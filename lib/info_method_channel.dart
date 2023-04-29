@@ -31,6 +31,8 @@ class MethodChannelInfo extends InfoPlatform {
   @override
   Stream OnChangeConnectivity() async* {
     /// Fires whenever the Connection state changes.
+   
+
     yield* connectivityEventChannel.receiveBroadcastStream();
   }
 

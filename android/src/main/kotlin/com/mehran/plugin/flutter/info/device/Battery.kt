@@ -1,7 +1,6 @@
 package com.mehran.plugin.flutter.info.device
 
 import android.content.*
-import android.net.ConnectivityManager
 import android.os.BatteryManager
 import android.os.*
 import android.os.PowerManager
@@ -16,36 +15,49 @@ import androidx.annotation.NonNull
 //import android.os.BatteryManager
 
 class Battery:BroadcastReceiver(), EventChannel.StreamHandler{
-//    public  var  receiver:BroadcastReceiver?=null
-////    public var applicationContext: Context? = null
-//public var chargingStateChangeReceiver: BroadcastReceiver? = null
+
+    
 public var applicationContext: Context? = null
-    public var chargingStateChangeReceiver: BroadcastReceiver? = null
+    lateinit var events: EventChannel.EventSink
+    private lateinit var eventChannel : EventChannel
 
- ///TODO:call in InfoPlugin method onListen
+
   override public  fun onListen(arguments: Any?, events: EventChannel.EventSink) {
-     print(" B A T T E R Y    P R I N T ");
-        chargingStateChangeReceiver = changeReceiver(events)
-        applicationContext?.registerReceiver(chargingStateChangeReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-//        val status = getBatteryStatus()
-//        val level = getBatteryLevel()
-//        val power = isInPowerSaveMode()
-//
-//        updateDetails(events,"""{
-//            "status":$status,
-//            "level":$level,
-//            "power":$power,
-//            }""".trimMargin())
+        this.events=events
+        applicationContext?.registerReceiver(this, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+
     }
-    ///TODO:call in InfoPlugin method onCancel
+    
+    
   override  public fun onCancel(arguments: Any?) {
-        print(" B A T T E R Y    CAncel");
-        applicationContext!!.unregisterReceiver(chargingStateChangeReceiver)
-        chargingStateChangeReceiver = null
+        applicationContext!!.unregisterReceiver(this)
     }
 
-    override fun onReceive(p0: Context?, p1: Intent?) {
-        TODO("Not yet implemented")
+    override fun onReceive(context: Context, intent: Intent) {
+
+        val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+//                val power = intent.getIntExtra(BatteryManager.EX, -1)
+        val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val tech = intent.getIntExtra(BatteryManager.EXTRA_TECHNOLOGY, 0)
+        val health = intent.getIntExtra(BatteryManager.EXTRA_HEALTH, -1)
+        val temp = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1)
+        val voltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1)
+        val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)
+        val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+
+        var power=isInPowerSaveMode()
+
+        updateDetails(events,"""{
+            "status":${convertBatteryStatus(status)},
+            "level":$level,
+            "technology":$tech,
+            "health":${convertBatteryHealth(health)},
+            "temprature":$temp,
+            "plugged":${convertPlugged(plugged)},
+            "voltage":$voltage,
+            "scale":$scale,
+            "power":$power,
+            }""".trimMargin())
     }
 
     public fun getBatteryStatus(): String? {
@@ -121,35 +133,7 @@ public var applicationContext: Context? = null
         return batteryManager.getIntProperty(property)
     }
 
-    public fun changeReceiver(events: EventChannel.EventSink): BroadcastReceiver {
-        return object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
-//                val power = intent.getIntExtra(BatteryManager.EX, -1)
-                val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
-                val tech = intent.getIntExtra(BatteryManager.EXTRA_TECHNOLOGY, -1)
-                val health = intent.getIntExtra(BatteryManager.EXTRA_HEALTH, -1)
-                val temp = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1)
-                val voltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1)
-                val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)
-                val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
 
-var power=isInPowerSaveMode()
-
-                updateDetails(events,"""{
-            "status":${convertBatteryStatus(status)},
-            "level":$level,
-            "technology":$tech,
-            "health":${convertBatteryHealth(health)},
-            "temprature":$temp,
-            "plugged":$plugged,
-            "voltage":$voltage,
-            "scale":$scale,
-            "power":$power,
-            }""".trimMargin())
-            }
-        }
-    }
 
     public fun convertBatteryHealth(health:Int):String?{
         return when (health){
@@ -160,6 +144,14 @@ var power=isInPowerSaveMode()
             BatteryManager.BATTERY_HEALTH_UNKNOWN->"UNKNOWN"
             BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE->"OVER-VOLTAGE"
             BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE->"UNDPECIFIED"
+            else->null
+        }
+    }
+    public fun convertPlugged(health:Int):String?{
+        return when (health){
+            BatteryManager.BATTERY_PLUGGED_AC->"AC"
+            BatteryManager.BATTERY_PLUGGED_USB->"USB"
+            BatteryManager.BATTERY_PLUGGED_WIRELESS->"Wireless"
             else->null
         }
     }
@@ -184,61 +176,33 @@ var power=isInPowerSaveMode()
         }
     }
 
-    companion object {
-        public const val POWER_SAVE_MODE_SAMSUNG = "1"
-        public const val POWER_SAVE_MODE_XIAOMI = 1
-        public const val POWER_SAVE_MODE_HUAWEI = 4
+
+
+
+
+
+
+
+
+
+    public fun onAttachEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+
+        applicationContext = flutterPluginBinding.applicationContext
+        eventChannel = EventChannel(flutterPluginBinding.binaryMessenger, "info-event-mehran")
+        eventChannel.setStreamHandler(this)
+
+    }
+    public fun onDettachEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+
+        eventChannel.setStreamHandler(null)
+
     }
 
 
 
-
-
-
-
-//override  fun onListen(arguments:Any?,events:EventSink?){
-//    if(events==null) return
-//    receiver=initReceiver(events)
-//    context.registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-//}
-//    override  fun onCancel(arguments:Any?){
-//        context.unregisterReceiver(receiver)
-//        receiver=null
-//    }
-//    public  fun initReceiver(events:EventSink):BroadcastReceiver{
-//        return  object:BroadcastReceiver(){
-//            override fun onReceive(context: Context?, intent: Intent?) {
-//                val status= intent?.getIntExtra(BatteryManager.EXTRA_STATUS,-1)
-//                when(status){
-//                    BatteryManager.BATTERY_STATUS_CHARGING->events.success("BATTERY CHARGING")
-//                    BatteryManager.BATTERY_STATUS_FULL->events.success("BATTERY FULL")
-//                    BatteryManager.BATTERY_STATUS_DISCHARGING->events.success("BATTERY DISCHARGING")
-//                }
-//                TODO("Not yet implemented")
-//            }
-//        }
-//    }
-//    public final var broadCastReciver= BroadcastReciver(){
-//        @Override
-//        listOfNotNull()
-//    }
-//    val battery= BatteryManager()
-//    public fun info():String{
-//       return """
-//           {"isCharging":"${battery.isCharging}",
-//            ""}
-//       """.trimIndent()
-//    }
-
-    public fun onAttachedToEngineConnectivity(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        var context:Context=flutterPluginBinding.getApplicationContext()
-        connectivityManager=
-            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        applicationContext = flutterPluginBinding.applicationContext
-        connectivityEventChannel = EventChannel(flutterPluginBinding.binaryMessenger, "info-event-mehran-connectivity")
-        connectivityEventChannel.setStreamHandler(this)
-
-
-
+    companion object {
+        public const val POWER_SAVE_MODE_SAMSUNG = "1"
+        public const val POWER_SAVE_MODE_XIAOMI = 1
+        public const val POWER_SAVE_MODE_HUAWEI = 4
     }
 }
